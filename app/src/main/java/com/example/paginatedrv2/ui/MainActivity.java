@@ -3,14 +3,15 @@ package com.example.paginatedrv2.ui;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.paginatedrv2.R;
 import com.example.paginatedrv2.api.JikanApi;
 import com.example.paginatedrv2.api.MangaService;
-import com.example.paginatedrv2.databinding.ActivityMainBinding;
 import com.example.paginatedrv2.models.Manga;
 import com.example.paginatedrv2.models.responses.MangaListResponse;
 import com.example.paginatedrv2.ui.adapter.MangaAdapter;
@@ -25,7 +26,9 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
-    ActivityMainBinding binding;
+    RecyclerView rv;
+    ProgressBar pb;
+
     MangaService mangaService;
     MangaAdapter mangaAdapter;
 
@@ -39,11 +42,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        View view = binding.getRoot();
-        setContentView(view);
+        setContentView(R.layout.activity_main);
 
-        RecyclerView rv = binding.mainRecycler;
+        rv = findViewById(R.id.main_recycler);
+        pb = findViewById(R.id.main_progress);
 
         mangaAdapter = new MangaAdapter(this);
 
@@ -58,8 +60,6 @@ public class MainActivity extends AppCompatActivity {
                 isLoading = true;
                 currentPage += 1;
 
-                Log.d(TAG, "loadMoreItems: currentPage: " + currentPage);
-                Log.d(TAG, "loadMoreItems: TOTAL_PAGES: " + TOTAL_PAGES);
                 loadNextPage();
             }
 
@@ -91,6 +91,15 @@ public class MainActivity extends AppCompatActivity {
         return response.body().getData();
     }
 
+    private MangaListResponse.MetaPagination extractPagination(Response<MangaListResponse> response) {
+        // throw an error if the response is not successful or the body is null
+        if (!response.isSuccessful() || response.body() == null) {
+            throw new RuntimeException("Response is not successful or the body is null");
+        }
+
+        return response.body().getPagination();
+    }
+
     private void loadFirstPage() {
         Log.d(TAG, "loadFirstPage() called");
         currentPage = PAGE_START;
@@ -98,9 +107,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<MangaListResponse> call, Response<MangaListResponse> response) {
                 List<Manga> mangas = extractResults(response);
-                binding.mainProgress.setVisibility(View.GONE);
+                pb.setVisibility(View.GONE);
                 mangaAdapter.addAll(mangas);
-                TOTAL_PAGES = response.body().getPagination().getItems().getTotal();
+
+                TOTAL_PAGES = extractPagination(response).getItems().getTotal();
 
                 if (currentPage <= TOTAL_PAGES) mangaAdapter.addLoading();
                 else isLastPage = true;

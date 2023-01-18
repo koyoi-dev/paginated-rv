@@ -2,15 +2,17 @@ package com.example.paginatedrv2.ui.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.paginatedrv2.databinding.ItemListBinding;
-import com.example.paginatedrv2.databinding.ItemProgressBinding;
+import com.example.paginatedrv2.R;
 import com.example.paginatedrv2.models.Manga;
+import com.google.android.material.imageview.ShapeableImageView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +22,8 @@ public class MangaAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private static final int ITEM = 0;
     private static final int LOADING = 1;
 
-    private Context context;
-    private List<Manga> mangas;
+    private final Context context;
+    private final List<Manga> mangas;
 
     private boolean isLoading = false;
 
@@ -30,26 +32,18 @@ public class MangaAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         this.mangas = new ArrayList<>();
     }
 
-    public List<Manga> getMangas() {
-        return mangas;
-    }
-
-    public void setMangas(List<Manga> mangas) {
-        this.mangas = mangas;
-    }
-
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
         if (viewType == ITEM) {
-            ItemListBinding itemListBinding = ItemListBinding.inflate(inflater, parent, false);
-            return new MangaVH(itemListBinding);
+            View view = inflater.inflate(R.layout.item_list, parent, false);
+            return new MangaVH(view);
         }
 
-        ItemProgressBinding binding = ItemProgressBinding.inflate(inflater, parent, false);
-        return new LoadingVH(binding);
+        View view = inflater.inflate(R.layout.item_progress, parent, false);
+        return new LoadingVH(view);
     }
 
     @Override
@@ -100,29 +94,32 @@ public class MangaAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     }
 
     public static class MangaVH extends RecyclerView.ViewHolder {
-        private final ItemListBinding binding;
+        private TextView title;
+        private TextView year;
+        private TextView description;
+        private ShapeableImageView poster;
 
-        public MangaVH(@NonNull ItemListBinding itemBinding) {
-            super(itemBinding.getRoot());
-            this.binding = itemBinding;
+        public MangaVH(@NonNull View itemView) {
+            super(itemView);
+            this.title = itemView.findViewById(R.id.movie_title);
+            this.year = itemView.findViewById(R.id.movie_year);
+            this.description = itemView.findViewById(R.id.movie_desc);
+            this.poster = itemView.findViewById(R.id.movie_poster);
         }
 
         public void bind(Manga manga) {
-            binding.movieTitle.setText(manga.getTitle());
-            binding.movieYear.setText(manga.getPublished().getString());
-            binding.movieDesc.setText(manga.getSynopsis());
-            Glide.with(binding.getRoot())
+            title.setText(manga.getTitle());
+            year.setText(manga.getPublished().getString());
+            description.setText(manga.getSynopsis());
+            Glide.with(itemView)
                     .load(manga.getImages().getJpg().getImageUrl())
-                    .into(binding.moviePoster);
+                    .into(poster);
         }
     }
 
     public static class LoadingVH extends RecyclerView.ViewHolder {
-        private final ItemProgressBinding binding;
-
-        public LoadingVH(@NonNull ItemProgressBinding binding) {
-            super(binding.getRoot());
-            this.binding = binding;
+        public LoadingVH(@NonNull View itemView) {
+            super(itemView);
         }
 
         public void bind() {
